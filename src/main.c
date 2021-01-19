@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdbool.h>
+#include <string.h>
 
 char *roll(char *fortunes[], int size)
 {
@@ -9,33 +11,43 @@ char *roll(char *fortunes[], int size)
     return *(fortunes+offset);
 }
 
-int main ()
+int main()
 {
-    int size = 20;
-    char *fortunes[64] = {
-        "As I see it, yes.",
-        "Ask again later.",
-        "Better not tell you now.",
-        "Cannot predict now.",
-        "Concentrate and ask again.",
-        "Don't count on it.",
-        "It is certain.",
-        "It is decidedly so.",
-        "Most likely.",
-        "My reply is no.",
-        "My sources say no.",
-        "Outlook not so good.",
-        "Outlook good.",
-        "Reply hazy, try again.",
-        "Signs point to yes.",
-        "Very doubtful.",
-        "Without a doubt.",
-        "Yes.",
-        "Yes - definitely.",
-        "You may rely on it."
-    };
+    #define FORTUNE_BUFFER_SIZE 200 /* This defines the max byte size for each string read from the file. */
+    int capacity = 10; /* set inital capacity to 10 */
+    char **fortunes = malloc(capacity * sizeof(char*));
+
+    FILE *filePointer;
+    filePointer = fopen("../fortunes.txt", "r");
+    char singleLine[FORTUNE_BUFFER_SIZE];
+    int size = 0;
+    for (int i = 0; feof(filePointer) == false; i++)
+    {
+        /* grow */
+        if (size == capacity)
+            fortunes = realloc(fortunes, (capacity += capacity) * sizeof(char*));
+
+        fgets(singleLine, FORTUNE_BUFFER_SIZE, filePointer);
+
+        /* find and remove '\n' */
+        char *newLine = strchr(singleLine, '\n');
+        if (newLine)
+            *newLine = '\0';
+
+        *(fortunes+i) = strdup(singleLine);
+        size++;
+    }
+    fclose(filePointer);
+
+    /* trim excess */
+    fortunes = realloc(fortunes, size * sizeof(char*));
 
     printf("%s\n", roll(fortunes, size));
+
+    /* deallocate */
+    for (int i = 0; i < size; i++)
+        free(*(fortunes+i));
+    free(fortunes);
     
     return 0;
 }
